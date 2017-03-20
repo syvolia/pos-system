@@ -1,0 +1,93 @@
+<?
+// This file is an help and shouldn't be executed.
+// You can however activate syntaxical coloration for a better read.
+die();
+
+/************************** Before Everything Else: *************************/
+
+// Include the class:
+include("db.class.php");
+
+// Open the base (construct the object):
+$db = new DB($base, $server, $user, $pass);
+
+/************************** Basic Queries: **********************************/
+
+// Do a query (return the same as mysqli_query):
+$result = $db->query("SELECT * FROM People");
+$result = $db->query("SELECT * FROM People", true); // With DEBUG
+
+// Browse results of a query (return a line as an object):
+while ($line = $db->fetchNextObject($result)) {}
+while ($line = $db->fetchNextObject()) {} // From the LAST query
+
+// Commonly, you can copy/paste this code for one query at a time:
+$db->query("SELECT * FROM People");
+while ($line = $db->fetchNextObject()) {
+  use($line->aField);
+}
+
+// But for sub-queries you should store the result of the first queries:
+$result = $db->query("SELECT * FROM Towns");
+while ($line = $db->fetchNextObject($result)) {
+  $db->query("SELECT * FROM People WHERE town='{$line->name}'");
+  while ($line2 = $db->fetchNextObject()) {
+    use($line->aField, $line2->anotherField);
+  }
+}
+
+// If you have a query that doesn't return any result such as INSERT, UPDATE, DELETE... use this:
+$db->execute("UPDATE People SET name=name");
+
+/************************** Convenient Query Functions: *********************/
+
+// Do a query and return the unique resulting object from it (or NULL if there is no result):
+// Equivalent to a call to query() and then to fetchNextObject().
+$line = $db->queryUniqueObject("SELECT * FROM People WHERE id=2");
+$line = $db->queryUniqueObject("SELECT * FROM People WHERE id=2", true); // With DEBUG
+
+// Do a query and return the unique resulting cell from it (or NULL if there is no result):
+// Equivalent to a call to query() and then to fetchNextObject() and then a fetching of the first cell.
+$age = $db->queryUniqueValue("SELECT age FROM People WHERE id=2");
+
+// Return the maximum of a column in a table, with a condition WHERE:
+// Example: "SELECT MAX(age) FROM People WHERE town='Paris'" is simply:
+$max = $db->maxOf("age", "People", "town='Paris'");
+
+// If there is no condition, it's simply:
+$max = $db->maxOfAll("age", "People");
+
+// Return the number of lines in a table, with a condition WHERE:
+// Example: "SELECT COUNT(*) FROM People WHERE town='Paris'" is just:
+$count = $db->countOf("People", "town='Paris'");
+
+// If there is no condition, it's just:
+$count = $db->countOfAll("People");
+
+// All query...() methods can take a second boolean parameter to debug it or not.
+// All those convenient methods can be imbriqued: the query is not saved.
+
+/************************** Other Functions: ********************************/
+
+// Get the id of the last inserted line:
+$lastId = $db->lastInsertedId();
+
+// The execution time of the script (from "new DB();"):
+$time = $db->getExecTime();
+
+// The number of executed queries (from "new DB();"):
+$queriesCount = $db->getQueriesCount();
+
+/************************** Useless Functions: ******************************/
+
+// Number of lines of a result (return an integer):
+$numLines = $db->numRows($result);
+$numLines = $db->numRows(); // From the LAST query
+
+// Go back to the first line in a fetch:
+$db->resetFetch($result);
+
+// Close the connexion to the base:
+$db->close();
+
+?>
